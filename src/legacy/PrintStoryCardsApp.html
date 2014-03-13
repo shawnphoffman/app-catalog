@@ -18,7 +18,7 @@
 
             function displayCards(results) {
                 var estimate, loginName, ownerClass, storyId, taskId, description,
-                        i, name, theMarkup, data, userTable, ownerText;
+                        i, name, theMarkup, data, userTable, ownerText, sprintName;
 
                 userTable = buildUserTable(results.users);
 
@@ -26,10 +26,10 @@
 
                 for (i = 0; i < data.length; i++) {
                     name = data[i].Name;
-                    if (name.length > MAX_NAME_LEN) {
+                    /*if (name.length > MAX_NAME_LEN) {
                         name = name.substring(0, MAX_NAME_LEN);
                         name += "...";
-                    }
+                    }*/
 
                     loginName = data[i].Owner;
                     if (typeof loginName === 'undefined' || loginName === null) {
@@ -53,13 +53,15 @@
                     } else if (data[i].Estimate) {
                         estimate = data[i].Estimate;
                     } else {
-                        estimate = "None";
+                        estimate = "____";
                     }
+
+                    sprintName = formattedSprintName();
 
                     description = data[i].Description;
 
                     theMarkup = createMarkup(i, data.length, name, ownerText, ownerClass, description,
-                            storyId, taskId, estimate);
+                            storyId, taskId, estimate, sprintName);
 
                     dojo.byId("cards").innerHTML += theMarkup;
                 }
@@ -83,9 +85,8 @@
                 }
             }
 
-            function createMarkup(cardNum, totalCards, name, ownerText, ownerClass, description, storyId, taskId, estimate) {
+            function createMarkup(cardNum, totalCards, name, ownerText, ownerClass, description, storyId, taskId, estimate, sprintName) {
                 var theMarkup, id;
-                var sprintName = iterationDropdown.getSelectedName();
 
                 if (CARD_TYPE === 'stories') {
                     id = storyId;
@@ -103,8 +104,10 @@
                                 '<div class="card-title">' + name + '</div>' +
                                 //'<div class="description">' + description + '</div>' +
                             '</div>' +
-                            '<span class="sprintNum"> ' + sprintName + '</span>' +
-                            '<span class="estimate"><span class="labelText">Size:</span> ' + estimate + '</span>' +
+                            '<div class="footer">' +
+                                '<span class="sprintNum"> ' + sprintName + '</span>' +
+                                '<span class="estimate"><span class="labelText">Size:</span> ' + estimate + '</span>' +
+                            '</div>' +
                         '</div>';
 
                 if ((cardNum + 1) % 2 === 0) {
@@ -157,6 +160,20 @@
                 return styleSheet.innerHTML;
             }
 
+            function formattedSprintName() {
+                var sprintName = iterationDropdown.getSelectedName();
+                sprintName = sprintName.replace("Isotope ","");
+                sprintName = sprintName.replace("Release ","");
+
+                if(sprintName.indexOf("Sprint") != -1)
+                    sprintName = sprintName.substring(sprintName.lastIndexOf("Sprint"));
+
+                if(sprintName.indexOf("Hardening") != -1)
+                    sprintName = sprintName.substring(sprintName.lastIndexOf("Hardening"));
+
+                return sprintName;
+            }
+
             function printPop() {
                 var title, options, printWindow, doc, cardMarkup;
 
@@ -197,12 +214,11 @@
     <style type="text/css" title="printCards">
             /* PLEASE LEAVE THIS STYLESHEET INLINE SINCE TITLE IS NECESSARY */
         @media print {
-            #interface {
-                display: none;
+            .artifact{
+                page-break-inside: avoid;
             }
 
             .pb {
-                page-break-after: always;
                 clear: both;
             }
         }
@@ -213,7 +229,7 @@
         }
 
         #interface, #printSection {
-            margin: 10px;
+            margin: 20px;
         }
 
         html {
@@ -238,11 +254,11 @@
             background-color: #fff;
             border: 2px solid #000;
             float: left;
-            height: 3in;
+            height: 3.1in;
             margin: 0.1in 0.1in 0.1in 0.1in;
             position: relative;
             overflow: hidden;
-            width: 4in;
+            width: 4.2in;
         }
 
         .header {
@@ -259,9 +275,12 @@
         }
 
         .card-title {
-            font: bold 26px Arial, sans-serif;
+            font: bold 24px Arial, sans-serif;
             padding-top: 0.5em;
+            padding-left: 0.25em;
+            padding-right: 0.25em;
             text-align: center;
+            height: 100%;
         }
 
         .description {
@@ -289,9 +308,10 @@
 
         .storyID {
             float: left;
-            font: 14pt / 1.26 Arial, Helvetica, sans-serif;
+            font: 16pt Arial, Helvetica, sans-serif;
             margin-left: 0.25em;
             margin-top: 0.3em;
+            font-weight: bold;
         }
 
         .estimate {
@@ -300,6 +320,7 @@
             right: 0.35em;
             font-size: 18pt;
             font-weight: bold;
+            float: right;
         }
 
         .content {
@@ -312,12 +333,28 @@
         }
 
         .sprintNum{
-            font-size: 18pt;
+            font-size: 16pt;
             position: absolute;
             bottom: .15em;
             left: .25em;
-            font-family: arial, sans-serif;
-            font-weight: bold;
+            font-family: Arial, sans-serif;
+            float: left;
+        }
+
+        .footer{
+            position: absolute;
+            bottom: 0em;
+            width: 100%;
+            border-top: 1px solid #000;
+            height: 36px;
+            background-color: #DDD;
+        }
+
+        #interface {
+            clear: both;
+        }
+        .appHeaderContainer {
+            margin-top: 0px !important;
         }
 
     </style>
@@ -338,6 +375,7 @@
     </script>
 </head>
 <body>
+<h2 style="float:left; margin-left: 10px; color: green;">Print these in PORTRAIT orientation.</h2>
 <div style="float:right" id="help"></div>
 <div id="interface">
     <div id="iterationDropdown"></div>
