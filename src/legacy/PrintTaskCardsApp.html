@@ -138,7 +138,7 @@
                     type: CARD_TYPE,
                     query: '(Iteration.Name contains "' + iterationDropdown.getSelectedName() + '")',
                     fetch: 'Name,Iteration,WorkProduct,Owner,FormattedID,Estimate,ObjectID,Description,UserName',
-                    order: 'Rank'
+                    order: 'WorkProduct'
                 };
                 queryArray[1] = {
                     key: 'users',

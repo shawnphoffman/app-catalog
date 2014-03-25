@@ -140,7 +140,7 @@
                     type: 'hierarchicalrequirement',
                     query: '(Iteration.Name contains "' + iterationDropdown.getSelectedName() + '")',
                     fetch: 'Name,Iteration,Owner,FormattedID,PlanEstimate,ObjectID,Description,UserName',
-                    order: 'Rank'
+                    order: 'FormattedID'
                 };
                 queryArray[1] = {
                     key: 'users',
