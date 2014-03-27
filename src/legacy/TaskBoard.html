@@ -255,7 +255,7 @@ function initTaskboard() {
 
             html.push('<div style="' + contentStyle + '">');
             html.push('<div class="id">' + item.FormattedID + '</div>');
-            html.push('<div class="name">' + RALLY.toolkit.niceSubstring(item.Name) + '</div>');
+            html.push('<div class="name">' + RALLY.toolkit.niceSubstring(item.Name, 250) + '</div>');
             html.push('<div class="' + ownerClass.join(' ') + '">' + owner + '</div>');
 
             html.push('<div class="time">');
