@@ -172,7 +172,7 @@ function initTaskboard() {
             html.push('<div class="state">' + state.display(false, value.ScheduleState == 'Accepted') + '</div>');
 
             html.push('<div class="id">' + value.FormattedID + '</div>');
-            html.push('<div class="name">' + RALLY.toolkit.niceSubstring(value.Name, 100) + '</div>');
+            html.push('<div class="name">' + RALLY.toolkit.niceSubstring(value.Name, 250) + '</div>');
             html.push('<div class="' + ownerClass.join(' ') + '">' + owner + '</div>');
 
             html.push(renderTimeCell((schema.TaskEstimateTotal) ? schema.TaskEstimateTotal.DisplayName : 'Est', value.TaskEstimateTotal, timeClass.join(' ')));
