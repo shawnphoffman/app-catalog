@@ -29,15 +29,17 @@ function initTaskboard() {
 
     RALLY.toolkit.HTML.createMaskLayer();
 
-    var abbrev = {'User Story': 'ar', 'Defect': 'df', 'Task': 'tk', 'TestCase': 'tc'};
-    function artifactLink(artifactName, artifact) {
-      var artUrl = "__SERVER_URL__/detail/_ABBREV_/_OID_";
-      artUrl = artUrl.replace('_ABBREV_', abbrev[artifactName]);
-      artUrl = artUrl.replace('_OID_', artifact.ObjectID);
-      var linkText = artifact.FormattedID; // + " " + artifact.Name;
-      var link = '<a href="_URL_" target="_blank">_TEXT_</a>';
-      link = link.replace('_URL_', artUrl);
-      link = link.replace('_TEXT_', linkText);
+    var abbrev = {'User Story': 'ar', 'Defect': 'df', 'Task': 'tk', 'TestCase': 'tc', 'HierarchicalRequirement' : 'ar'};
+    function artifactLink(artifact) {
+      var link = '';
+      var abr = abbrev[artifact._type];
+      if (abr != undefined) {
+        var artUrl = "__SERVER_URL__/detail/_ABBREV_/_OID_".replace('_ABBREV_', abr).replace('_OID_', artifact.ObjectID);
+        link = '<a href="_URL_" target="_blank">_TEXT_</a>'.replace('_URL_', artUrl).replace('_TEXT_', artifact.FormattedID);
+      } else {
+        console.warn('Artifact _type not mapping appropriately for links.');
+        console.log(artifact);
+      }
       return link;
     };
 
@@ -184,7 +186,7 @@ function initTaskboard() {
             html.push('<div class="state">' + state.display(false, value.ScheduleState == 'Accepted') + '</div>');
 
             // html.push('<div class="storyId">' + value.FormattedID + '</div>');
-            html.push('<div class="storyId">' + artifactLink('User Story', value) + '</div>');
+            html.push('<div class="storyId">' + artifactLink(value) + '</div>');
             html.push('<div class="name">' + RALLY.toolkit.niceSubstring(value.Name, 250) + '</div>');
             html.push('<div class="' + ownerClass.join(' ') + '">' + owner + '</div>');
 
@@ -268,7 +270,7 @@ function initTaskboard() {
 
             html.push('<div style="' + contentStyle + '">');
             // html.push('<div class="id">' + item.FormattedID + '</div>');
-            html.push('<div class="id">' + artifactLink('Task', item) + '</div>');
+            html.push('<div class="id">' + artifactLink(item) + '</div>');
             html.push('<div class="name">' + RALLY.toolkit.niceSubstring(item.Name, 250) + '</div>');
             html.push('<div class="' + ownerClass.join(' ') + '">' + owner + '</div>');
 
