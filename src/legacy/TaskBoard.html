@@ -86,7 +86,7 @@ function initTaskboard() {
 
             "tasks": "/tasks?fetch=taskindex,name,objectid,formattedid,owner,blocked,estimate,todo,actuals,state,workproduct&query=(Iteration = ${iteration})" + scoping + paging,
 
-            "stories": "/hierarchicalrequirement?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal,tasks&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
+            "stories": "/hierarchicalrequirement?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal,tasks,inProgressDate&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "defects": "/defect?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "defectsuite": "/defectsuite?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "testsets": "/testset?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal&query=(Iteration = ${iteration})" + scoping + paging
@@ -237,6 +237,10 @@ function initTaskboard() {
             } else {
                 ownerClass.push('de-emphasis deleted-owner');
                 owner = item.Owner;
+            }
+
+            if (item.Estimate == undefined || item.Estimate == 0){
+                estClass.push('empty-estimate');
             }
 
             if (item.Blocked) {
@@ -1133,6 +1137,11 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
     .rally-task-accepted {
         background-color: #ececec;
         border: 1px solid #cbcbcb;
+    }
+
+    .rally-task .empty-estimate {
+      background-color: red;
+      color: white;
     }
 
         /** filter bar **/
