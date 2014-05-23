@@ -11,7 +11,7 @@
 <link type="text/css" rel="stylesheet" href="__SERVER_URL__/css/toolkit/0.02/grid.css"/>
 <link type="text/css" rel="stylesheet" href="__SERVER_URL__/css/toolkit/0.02/editor.css"/>
 <link type="text/css" rel="stylesheet" href="__SERVER_URL__/css/toolkit/0.02/toolkit.css"/>
-
+<link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
 <script type="text/javascript" src="__SERVER_URL__/js/toolkit/0.02/yui.js"></script>
 <script type="text/javascript" src="__SERVER_URL__/js/toolkit/0.02/toolkit.js"></script>
 <script type="text/javascript" src="__SERVER_URL__/js/toolkit/0.02/date.js"></script>
@@ -87,7 +87,7 @@ function initTaskboard() {
             "tasks": "/tasks?fetch=taskindex,name,objectid,formattedid,owner,blocked,estimate,todo,actuals,state,workproduct&query=(Iteration = ${iteration})" + scoping + paging,
 
             "stories": "/hierarchicalrequirement?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal,tasks,inProgressDate&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
-            "defects": "/defect?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
+            "defects": "/defect?fetch=severity,rank,blocked,formattedid,name,objectid,owner,project,schedulestate,submittedby,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "defectsuite": "/defectsuite?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "testsets": "/testset?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal&query=(Iteration = ${iteration})" + scoping + paging
         };
@@ -150,13 +150,15 @@ function initTaskboard() {
         },
         rowHeaderRenderer: function (container, value, modelSchema) {
             var state,
-                    html = [],
-                    schema = modelSchema.WorkProduct,
-                    owner,
-                    ownerClass = ['owner'],
-                    divId = 'rally-workprod-' + value.ObjectID,
-                    divClass = ['rally-workprod'],
-                    timeClass = ['rally-time'];
+                html = [],
+                schema = modelSchema.WorkProduct,
+                owner,
+                submittedBy,
+                ownerClass = ['owner'],
+                submittedByClass = ['owner'],
+                divId = 'rally-workprod-' + value.ObjectID,
+                divClass = ['rally-workprod'],
+                timeClass = ['rally-time'];
 
             // owner could be an object literal, or a string (if the user has been deleted in the app)
             if (!value.Owner) {
@@ -167,6 +169,14 @@ function initTaskboard() {
             } else {
                 ownerClass.push('de-emphasis deleted-owner');
                 owner = value.Owner;
+            }
+
+            if (!value.SubmittedBy) {
+                submittedBy = gridController.noOwnerLabel;
+            } else if (Lang.isObject(value.SubmittedBy)) {
+                submittedBy = value.SubmittedBy._refObjectName;
+            } else {
+                submittedBy = value.SubmittedBy;
             }
 
             if (value.ScheduleState == 'Accepted') {
@@ -185,10 +195,27 @@ function initTaskboard() {
             });
             html.push('<div class="state">' + state.display(false, value.ScheduleState == 'Accepted') + '</div>');
 
-            // html.push('<div class="storyId">' + value.FormattedID + '</div>');
-            html.push('<div class="storyId">' + artifactLink(value) + '</div>');
+            html.push('<div class="storyId">');
+            if (value._type == "Defect") {
+              // html.push('<i class="fa fa-bug"></i>')
+            }
+            html.push(artifactLink(value) + '</div>');
+
             html.push('<div class="name">' + RALLY.toolkit.niceSubstring(value.Name, 250) + '</div>');
-            html.push('<div class="' + ownerClass.join(' ') + '">' + owner + '</div>');
+            html.push('<div class="' + ownerClass.join(' ') + '">Owner: ' + owner + '</div>');
+
+            var daArray = modelSchema.WorkProduct.Owner.options;
+            var submittedByName;
+            for (var i = 0; i < daArray.length; ++i) {
+                if (daArray[i].Value == submittedBy) {
+                    submittedByName = daArray[i].Label;
+                    break;
+                }
+            }
+            if (value._type == "Defect") {
+              html.push('<div class="owner dim-it">Submitted By: ' + submittedByName + '</div>');
+              html.push('<div class="owner dim-it">Severity: ' + value.Severity + '</div>');
+            }
 
             html.push(renderTimeCell((schema.TaskEstimateTotal) ? schema.TaskEstimateTotal.DisplayName : 'Est', value.TaskEstimateTotal, timeClass.join(' ')));
             html.push(renderTimeCell((schema.TaskRemainingTotal) ? schema.TaskRemainingTotal.DisplayName : 'To Do', value.TaskRemainingTotal, timeClass.join(' ')));
@@ -542,7 +569,8 @@ function initTaskboard() {
         displayEditorForUsers: function (item, schema, options) {
             schema.Owner.options = options;
             var editorConfig = {
-                props: (showActuals) ? ['Estimate', 'ToDo', 'Actuals', 'Owner', 'State'] : ['Estimate', 'ToDo', 'Owner', 'State'],
+                props: (showActuals) ? ['Name', 'Estimate', 'ToDo', 'Actuals', 'Owner', 'State'] : ['Name', 'Estimate', 'ToDo', 'Owner', 'State'],
+                // props: (showActuals) ? [ 'Estimate', 'ToDo', 'Actuals', 'Owner', 'State'] : [ 'Estimate', 'ToDo', 'Owner', 'State'],
                 propertyKeyAccessors: {
                     Owner: function (prop) {
                         return prop != null ? prop.LoginName : null;
@@ -554,7 +582,7 @@ function initTaskboard() {
                     }
                 },
                 titleAccessor: function (obj) {
-                    return obj.FormattedID + '<br/>' + obj.Name;
+                    return obj.FormattedID; //+ '<br/>' + obj.Name;
                 },
                 onErrorCallback: function () {
                     gridController.display();
@@ -1081,7 +1109,7 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
         padding-bottom: .5em;
     }
 
-    .rally-workprod .owner {
+    .rally-workprod .owner , .rally-wordprod .submitted-by{
         margin-bottom: .5em;
     }
 
@@ -1098,7 +1126,7 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
         margin-bottom: .5em;
     }
 
-    .rally-task .owner {
+    .rally-task .owner , .rally-task .submitted-by{
         margin-bottom: .5em;
     }
 
@@ -1184,6 +1212,22 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
 
     .show-progress {
         cursor: progress;
+    }
+
+    .tk-editorv input[type="text"] {
+      width: 200px;
+    }
+
+    .owner.dim-it {
+      color: #888888;
+    }
+/*
+    .rally-grid-table tr td + td + td {
+      background-color: blue;
+    }*/
+
+    .fa-bug{
+      /*color: orange;*/
     }
 </style>
 </head>
