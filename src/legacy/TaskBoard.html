@@ -84,10 +84,10 @@ function initTaskboard() {
 
             "users": "/users?fetch=displayname,loginname,emailaddress,objectid" + paging,
 
-            "tasks": "/tasks?fetch=taskindex,name,objectid,formattedid,owner,blocked,estimate,todo,actuals,state,workproduct&query=(Iteration = ${iteration})" + scoping + paging,
+            "tasks": "/tasks?fetch=tags,taskindex,name,objectid,formattedid,owner,blocked,estimate,todo,actuals,state,workproduct&query=(Iteration = ${iteration})" + scoping + paging,
 
-            "stories": "/hierarchicalrequirement?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal,tasks,inProgressDate&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
-            "defects": "/defect?fetch=severity,rank,blocked,formattedid,name,objectid,owner,project,schedulestate,submittedby,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
+            "stories": "/hierarchicalrequirement?fetch=tags,rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal,tasks,inProgressDate&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
+            "defects": "/defect?fetch=tags,severity,rank,blocked,formattedid,name,objectid,owner,project,schedulestate,submittedby,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "defectsuite": "/defectsuite?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "testsets": "/testset?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal&query=(Iteration = ${iteration})" + scoping + paging
         };
@@ -223,6 +223,25 @@ function initTaskboard() {
                 html.push(renderTimeCell((schema.TaskActualTotal) ? schema.TaskActualTotal.DisplayName : 'Actuals', value.TaskActualTotal, timeClass.join(' ')));
             }
 
+            html.push('<div class="tags">');
+            for (var i = 0; i < value.Tags.length; i++){
+              // Additional classes for specific tag types
+              var addlClasses = '';
+              if (value.Tags[i].Name == 'Critical') { addlClasses += 'tag-crit '; }
+
+              html.push('<div class="tag ' + addlClasses +'">');
+
+              // Custom icons for specific tag types else the usual (horribly inefficienct)
+              if (value.Tags[i].Name == 'Critical') { html.push('<i class="fa fa-warning fa-fw"></i>'); }
+              else {
+                // Standard tags
+                html.push('<i class="fa fa-tag fa-fw"></i>');
+              }
+
+              html.push((value.Tags[i].Name || '') + '</div>');
+            }
+            html.push('</div>');
+
             html.push('<div class="clear"></div>');
             html.push('</div>');
 
@@ -287,20 +306,22 @@ function initTaskboard() {
 
             html.push('<div class="' + taskClass.join(' ') + '" id="rally-task-' + item.ObjectID + '">');
             html.push('<div class="actions">');
-            html.push('<img id="' + editIconId + '" src="' + RALLY.toolkit.Connection.getServerURL() + '/images/icon_pencil.gif" alt="Edit" />');
-            html.push('<img id="' + deleteIconId + '" src="' + RALLY.toolkit.Connection.getServerURL() + '/images/icon_delete.gif" alt="Delete" />');
+            html.push('<i class="fa fa-pencil fa-lg fa-hover-link" id="' + editIconId + '" alt="Edit" ></i>');
+            // html.push('<img id="' + editIconId + '" src="' + RALLY.toolkit.Connection.getServerURL() + '/images/icon_pencil.gif" alt="Edit" />');
+            html.push('<i class="fa fa-trash-o fa-lg fa-hover-link" id="' + deleteIconId + '"  alt="Delete"></i>');
+            // html.push('<img id="' + deleteIconId + '" src="' + RALLY.toolkit.Connection.getServerURL() + '/images/icon_delete.gif" alt="Delete" />');
             html.push('</div>');
 
             if (item.Owner && Lang.isValue(item.Owner.ObjectID)) {
                 // if there is an image, we need to pad the content to account for it
                 contentStyle = 'margin-left: 70px';
-                html.push('<div class="image">');
+                var tempClass = owner == 'NLavelle-' ? 'fa fa-spin' : '';
+                html.push('<div class="image '+ tempClass +'">');
                 html.push('<img id="edit-control" src="' + RALLY.toolkit.Connection.getServerURL() + '/profile/viewThumbnailImage.sp?tSize=60&uid=' + item.Owner.ObjectID + '" alt="" />');
                 html.push('</div>');
             }
 
             html.push('<div style="' + contentStyle + '">');
-            // html.push('<div class="id">' + item.FormattedID + '</div>');
             html.push('<div class="id">' + artifactLink(item) + '</div>');
             html.push('<div class="name">' + RALLY.toolkit.niceSubstring(item.Name, 250) + '</div>');
             html.push('<div class="' + ownerClass.join(' ') + '">' + owner + '</div>');
@@ -1141,9 +1162,9 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
         right: -0.3em;
     }
 
-    .rally-task .actions img {
+    .rally-task .actions img, .rally-task .actions .fa-hover-link {
         display: block;
-        margin-bottom: .4em;
+        margin-bottom: .6em;
         cursor: pointer;
     }
 
@@ -1168,7 +1189,7 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
     }
 
     .rally-task .empty-estimate {
-      background-color: red;
+      background-color: darkred;
       color: white;
     }
 
@@ -1226,8 +1247,45 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
       background-color: blue;
     }*/
 
-    .fa-bug{
-      /*color: orange;*/
+    .tags {
+      clear:both;
+      float: left;
+      margin-bottom: .5em;
+      margin-top: .5em;
+    }
+    .tags .tag {
+      float: left;
+      -webkit-border-radius: 5px;
+      -moz-border-radius: 5px;
+      -ms-border-radius: 5px;
+      -o-border-radius: 5px;
+      border-radius: 5px;
+      background-color: #caf4ff;
+      color: #00435d;
+      border: 1px solid #017496;
+      line-height: 13px;
+      padding: 4px 6px 4px 3px;
+      margin: 1px 3px 1px 0;
+      position: relative;
+    }
+
+    .tags .tag.tag-crit {
+      background-color: #ffd8d8;
+      color: #aa2828;
+      border-color: #d32828;
+    }
+
+    .fa-hover-link {
+      cursor: pointer;
+      margin-bottom: .5em;
+    }
+
+    .fa-hover-link:hover {
+      color: #009ac1;
+    }
+
+    .actions .fa-lg {
+      font-size: 1.5em;
     }
 </style>
 </head>
