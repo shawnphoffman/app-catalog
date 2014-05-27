@@ -224,6 +224,10 @@ function initTaskboard() {
             }
 
             html.push('<div class="tags">');
+            if (value._type == "Defect"){
+              html.push('<div class="tag tag-defect"><i class="fa fa-bug fa-fw"></i>Defect</div>');
+            }
+
             for (var i = 0; i < value.Tags.length; i++){
               // Additional classes for specific tag types
               var addlClasses = '';
@@ -332,8 +336,29 @@ function initTaskboard() {
             if (showActuals) {
                 html.push(renderTimeCell((schema.Actuals) ? schema.Actuals.ShortName : 'Actuals', item.Actuals, actClass.join(' ')));
             }
-            html.push('<div class="clear"></div>');
             html.push('</div>');
+
+            // Task Tags
+            html.push('<div class="tags mini">');
+            for (var i = 0; i < item.Tags.length; i++){
+              // Additional classes for specific tag types
+              var addlClasses = '';
+              if (item.Tags[i].Name == 'Critical') { addlClasses += 'tag-crit '; }
+
+              html.push('<div class="tag ' + addlClasses +'">');
+
+              // Custom icons for specific tag types else the usual (horribly inefficienct)
+              if (item.Tags[i].Name == 'Critical') { html.push('<i class="fa fa-warning fa-fw"></i>'); }
+              else {
+                // Standard tags
+                // html.push('<i class="fa fa-tag fa-fw"></i>');
+              }
+
+              html.push((item.Tags[i].Name || '') + '</div>');
+            }
+            html.push('</div>');
+            html.push('<div class="clear"></div>');
+
             html.push('</div>');
 
             if (item.Blocked) {
@@ -1142,6 +1167,7 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
         font-size: .9em;
         text-align: left;
         border: 1px solid #999;
+        padding-bottom: .2em;
     }
 
     .rally-task .name {
@@ -1191,7 +1217,7 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
     }
 
     .rally-task .empty-estimate {
-      background-color: darkred;
+      background-color: #d50000;
       color: white;
     }
 
@@ -1255,6 +1281,10 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
       margin-bottom: .5em;
       margin-top: .5em;
     }
+    .tags.mini {
+      margin-bottom: .2em;
+      margin-top: .2em;
+    }
     .tags .tag {
       float: left;
       -webkit-border-radius: 5px;
@@ -1270,11 +1300,22 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
       margin: 1px 3px 1px 0;
       position: relative;
     }
+    .tags.mini .tag {
+      padding: 2px;
+      line-height: 10px;
+      font-size: 10px;
+    }
 
     .tags .tag.tag-crit {
       background-color: #ffd8d8;
       color: #aa2828;
       border-color: #d32828;
+    }
+
+    .tags .tag.tag-defect {
+      background-color: #fffdac;
+      color: #604d00;
+      border-color: #89780c;
     }
 
     .fa-hover-link {
