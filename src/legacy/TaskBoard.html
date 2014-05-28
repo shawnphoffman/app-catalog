@@ -84,7 +84,7 @@ function initTaskboard() {
 
             "users": "/users?fetch=displayname,loginname,emailaddress,objectid" + paging,
 
-            "tasks": "/tasks?fetch=tags,taskindex,name,objectid,formattedid,owner,blocked,estimate,todo,actuals,state,workproduct&query=(Iteration = ${iteration})" + scoping + paging,
+             "tasks": "/tasks?fetch=tags,recordedtimespent,taskindex,name,objectid,formattedid,owner,blocked,estimate,todo,actuals,state,workproduct&query=(Iteration = ${iteration})" + scoping + paging,
 
             "stories": "/hierarchicalrequirement?fetch=tags,rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal,tasks,inProgressDate&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "defects": "/defect?fetch=tags,severity,rank,blocked,formattedid,name,objectid,owner,project,schedulestate,submittedby,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
@@ -227,6 +227,9 @@ function initTaskboard() {
             if (value._type == "Defect"){
               html.push('<div class="tag tag-defect"><i class="fa fa-bug fa-fw"></i>Defect</div>');
             }
+            if (value.Blocked == true){
+              html.push('<div class="tag tag-crit"><i class="fa fa-ban fa-fw"></i>Blocked</div>');
+            }
 
             for (var i = 0; i < value.Tags.length; i++){
               // Additional classes for specific tag types
@@ -236,7 +239,7 @@ function initTaskboard() {
               html.push('<div class="tag ' + addlClasses +'">');
 
               // Custom icons for specific tag types else the usual (horribly inefficienct)
-              if (value.Tags[i].Name == 'Critical') { html.push('<i class="fa fa-warning fa-fw"></i>'); }
+              if (['Critical'].indexOf(value.Tags[i].Name) > -1) { html.push('<i class="fa fa-warning fa-fw"></i>'); }
               else {
                 // Standard tags
                 html.push('<i class="fa fa-tag fa-fw"></i>');
@@ -272,6 +275,7 @@ function initTaskboard() {
                     ownerClass = ['owner'],
                     estClass = ['rally-time'],
                     todoClass = ['rally-time'],
+                    recordedClass = ['rally-time'],
                     actClass = ['rally-time'],
                     schema = modelSchema.Task,
                     contentStyle = '',
@@ -333,6 +337,12 @@ function initTaskboard() {
             html.push('<div class="time">');
             html.push(renderTimeCell((schema.Estimate) ? schema.Estimate.ShortName : 'Est', item.Estimate, estClass.join(' ')));
             html.push(renderTimeCell((schema.ToDo) ? schema.ToDo.ShortName : 'To Do', item.ToDo, todoClass.join(' ')));
+            if (item.State == 'Completed') {
+              if (item.RecordedTimeSpent == undefined || item.RecordedTimeSpent == 0){
+                  recordedClass.push('empty-estimate');
+              }
+              html.push(renderTimeCell('Real', item.RecordedTimeSpent || '-', recordedClass.join(' ')));
+            }
             if (showActuals) {
                 html.push(renderTimeCell((schema.Actuals) ? schema.Actuals.ShortName : 'Actuals', item.Actuals, actClass.join(' ')));
             }
@@ -614,9 +624,19 @@ function initTaskboard() {
 
         displayEditorForUsers: function (item, schema, options) {
             schema.Owner.options = options;
+            schema.RecordedTimeSpent = {
+              'DataType' : 'NUMBER',
+              'DisplayName' : 'Real Time',
+              'ShortName' : 'Real',
+              'UnitName' : ['Hours']
+            };
+
+            var propArray = (showActuals) ? ['Name', 'Estimate', 'ToDo', 'Actuals', 'Owner', 'State'] : ['Name', 'Estimate', 'ToDo', 'Owner', 'State'];
+            // props: (showActuals) ? [ 'Estimate', 'ToDo', 'Actuals', 'Owner', 'State'] : [ 'Estimate', 'ToDo', 'Owner', 'State'],
+            if (item.State == "Completed") { propArray.push('RecordedTimeSpent'); }
+
             var editorConfig = {
-                props: (showActuals) ? ['Name', 'Estimate', 'ToDo', 'Actuals', 'Owner', 'State'] : ['Name', 'Estimate', 'ToDo', 'Owner', 'State'],
-                // props: (showActuals) ? [ 'Estimate', 'ToDo', 'Actuals', 'Owner', 'State'] : [ 'Estimate', 'ToDo', 'Owner', 'State'],
+                props : propArray,
                 propertyKeyAccessors: {
                     Owner: function (prop) {
                         return prop != null ? prop.LoginName : null;
@@ -1201,13 +1221,14 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
     }
 
     .rally-task-blocked {
-        border: 1px solid #f00;
+        border: 3px solid #f00;
+        background-color: rgba(255, 0, 0, 0.1);
     }
 
     .rally-task-blocked img.blocked-icon {
         float: right;
         position: relative;
-        bottom: -0.3em;
+        bottom: 0.15em;
         right: -0.3em;
     }
 
