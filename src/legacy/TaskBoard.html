@@ -84,9 +84,9 @@ function initTaskboard() {
 
             "users": "/users?fetch=displayname,loginname,emailaddress,objectid" + paging,
 
-             "tasks": "/tasks?fetch=tags,recordedtimespent,taskindex,name,objectid,formattedid,owner,blocked,estimate,todo,actuals,state,workproduct&query=(Iteration = ${iteration})" + scoping + paging,
+            "tasks": "/tasks?fetch=tags,description,recordedtimespent,taskindex,name,objectid,formattedid,owner,blocked,estimate,todo,actuals,state,workproduct&query=(Iteration = ${iteration})" + scoping + paging,
 
-            "stories": "/hierarchicalrequirement?fetch=tags,rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal,tasks,inProgressDate&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
+            "stories": "/hierarchicalrequirement?fetch=tags,description,rank,blocked,planestimate,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal,tasks,inProgressDate&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "defects": "/defect?fetch=tags,severity,rank,blocked,formattedid,name,objectid,owner,project,schedulestate,submittedby,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "defectsuite": "/defectsuite?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "testsets": "/testset?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal&query=(Iteration = ${iteration})" + scoping + paging
@@ -195,6 +195,11 @@ function initTaskboard() {
             });
             html.push('<div class="state">' + state.display(false, value.ScheduleState == 'Accepted') + '</div>');
 
+            if (value._type == "HierarchicalRequirement") {
+              if (value.PlanEstimate) { html.push('<div class="pointVal">' + value.PlanEstimate + '</div>'); }
+              else { html.push('<div class="pointVal empty-points">-</div>'); }
+            }
+
             html.push('<div class="storyId">');
             if (value._type == "Defect") {
               // html.push('<i class="fa fa-bug"></i>')
@@ -235,11 +240,15 @@ function initTaskboard() {
               // Additional classes for specific tag types
               var addlClasses = '';
               if (value.Tags[i].Name == 'Critical') { addlClasses += 'tag-crit '; }
+              if (value.Tags[i].Name == 'Pulled') { addlClasses += 'tag-pull '; }
+              if (value.Tags[i].Name == 'Pushed') { addlClasses += 'tag-push '; }
 
               html.push('<div class="tag ' + addlClasses +'">');
 
               // Custom icons for specific tag types else the usual (horribly inefficienct)
               if (['Critical'].indexOf(value.Tags[i].Name) > -1) { html.push('<i class="fa fa-warning fa-fw"></i>'); }
+              if (['Pulled'].indexOf(value.Tags[i].Name) > -1) { html.push('<i class="fa fa-arrow-left fa-fw"></i>'); }
+              if (['Pushed'].indexOf(value.Tags[i].Name) > -1) { html.push('<i class="fa fa-arrow-right fa-fw"></i>'); }
               else {
                 // Standard tags
                 html.push('<i class="fa fa-tag fa-fw"></i>');
@@ -280,7 +289,8 @@ function initTaskboard() {
                     schema = modelSchema.Task,
                     contentStyle = '',
                     editIconId = 'edit-' + Dom.generateId(),
-                    deleteIconId = 'delete-' + Dom.generateId();
+                    deleteIconId = 'delete-' + Dom.generateId(),
+                    detailsIconId = 'details-' + Dom.generateId();
 
             // owner could be an object literal, or a string (if the user has been deleted in the app)
             if (!item.Owner) {
@@ -314,10 +324,13 @@ function initTaskboard() {
 
             html.push('<div class="' + taskClass.join(' ') + '" id="rally-task-' + item.ObjectID + '">');
             html.push('<div class="actions">');
-            html.push('<i class="fa fa-pencil fa-lg fa-hover-link" id="' + editIconId + '" alt="Edit" ></i>');
-            // html.push('<img id="' + editIconId + '" src="' + RALLY.toolkit.Connection.getServerURL() + '/images/icon_pencil.gif" alt="Edit" />');
-            html.push('<i class="fa fa-trash-o fa-lg fa-hover-link" id="' + deleteIconId + '"  alt="Delete"></i>');
-            // html.push('<img id="' + deleteIconId + '" src="' + RALLY.toolkit.Connection.getServerURL() + '/images/icon_delete.gif" alt="Delete" />');
+            // Edit Task Icon
+            html.push('<i class="fa fa-pencil fa-lg fa-hover-link edit-icon" title="Quick Edit" id="' + editIconId + '" alt="Edit" ></i>');
+            // Trash Task Icon
+            html.push('<i class="fa fa-trash-o fa-lg fa-hover-link delete-icon" title="Delete" id="' + deleteIconId + '"  alt="Delete"></i>');
+            // Task Details Icon
+            // html.push('<i class="fa fa-eye fa-lg fa-hover-link details-icon" title="Quick View Details" id="' + detailsIconId + '"  alt="Details"></i>');
+
             html.push('</div>');
 
             if (item.Owner && Lang.isValue(item.Owner.ObjectID)) {
@@ -339,7 +352,7 @@ function initTaskboard() {
             html.push(renderTimeCell((schema.ToDo) ? schema.ToDo.ShortName : 'To Do', item.ToDo, todoClass.join(' ')));
             if (item.State == 'Completed') {
               if (item.RecordedTimeSpent == undefined || item.RecordedTimeSpent == 0){
-                  recordedClass.push('empty-estimate');
+                  recordedClass.push('empty-real');
               }
               html.push(renderTimeCell('Real', item.RecordedTimeSpent || '-', recordedClass.join(' ')));
             }
@@ -387,6 +400,10 @@ function initTaskboard() {
             Event.purgeElement(deleteIconId);
             Event.addListener(deleteIconId, 'click', function (e) {
                 gridController.deleteItem(item);
+            });
+            Event.purgeElement(detailsIconId);
+            Event.addListener(detailsIconId, 'click', function (e) {
+                gridController.showDetails(item);
             });
         },
 
@@ -620,6 +637,14 @@ function initTaskboard() {
                 }
             }
             return -1;
+        },
+
+        showDetails : function(item) {
+          RALLY.toolkit.showMessage(item._type, 'error');
+          // var r=confirm("Press a button");
+          // if (r || !r){
+            // console.log(item);
+          // }
         },
 
         displayEditorForUsers: function (item, schema, options) {
@@ -1242,6 +1267,11 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
       color: white;
     }
 
+    .rally-task .empty-real {
+      /*background-color: #d50000;
+      color: white;*/
+    }
+
         /** filter bar **/
     #filter {
         width: 100%;
@@ -1333,6 +1363,18 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
       border-color: #d32828;
     }
 
+    .tags .tag.tag-pull {
+      background-color: #e0ffdb;
+      color: #198f02;
+      border-color: #27a913;
+    }
+
+    .tags .tag.tag-push {
+      background-color: #feecc4;
+      color: #b8661f;
+      border-color: #d26c00;
+    }
+
     .tags .tag.tag-defect {
       background-color: #fffdac;
       color: #604d00;
@@ -1354,6 +1396,41 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
 
     .actions .fa-lg {
       font-size: 1.5em;
+    }
+
+    .actions .fa-lg.fa-eye {
+      font-size: 1.3em;
+      margin-top: -0.2em;
+    }
+
+    .pointVal {
+      display: inline-block;
+      min-width: 15px;
+      padding: 3px 7px;
+      font: 16px sans-serif;
+      font-weight: 700;
+      color: #FFF;
+      line-height: 1;
+      vertical-align: baseline;
+      white-space: nowrap;
+      text-align: center;
+      background-color: #999;
+      border-radius: 10px;
+      float: right;
+    }
+    .pointVal.empty-points{
+      background-color: #d50000;
+    }
+
+    #lean_overlay {
+      position: fixed;
+      z-index:100;
+      top: 0px;
+      left: 0px;
+      height:100%;
+      width:100%;
+      background: #000;
+      display: none;
     }
 </style>
 </head>
