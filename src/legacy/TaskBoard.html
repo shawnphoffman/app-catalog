@@ -87,7 +87,7 @@ function initTaskboard() {
             "tasks": "/tasks?fetch=tags,description,recordedtimespent,taskindex,name,objectid,formattedid,owner,blocked,estimate,todo,actuals,state,workproduct&query=(Iteration = ${iteration})" + scoping + paging,
 
             "stories": "/hierarchicalrequirement?fetch=tags,description,rank,blocked,planestimate,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal,tasks,inProgressDate&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
-            "defects": "/defect?fetch=tags,severity,rank,blocked,formattedid,name,objectid,owner,project,schedulestate,submittedby,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
+            "defects": "/defect?fetch=planestimate,tags,severity,rank,blocked,formattedid,name,objectid,owner,project,schedulestate,submittedby,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "defectsuite": "/defectsuite?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "testsets": "/testset?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal&query=(Iteration = ${iteration})" + scoping + paging
         };
@@ -195,7 +195,7 @@ function initTaskboard() {
             });
             html.push('<div class="state">' + state.display(false, value.ScheduleState == 'Accepted') + '</div>');
 
-            if (value._type == "HierarchicalRequirement") {
+            if (value._type == "HierarchicalRequirement" || value._type == "Defect") {
               if (value.PlanEstimate) { html.push('<div class="pointVal">' + value.PlanEstimate + '</div>'); }
               else { html.push('<div class="pointVal empty-points">-</div>'); }
             }
@@ -294,7 +294,7 @@ function initTaskboard() {
 
             // owner could be an object literal, or a string (if the user has been deleted in the app)
             if (!item.Owner) {
-                ownerClass.push('de-emphasis');
+                ownerClass.push('no-owner');
                 owner = gridController.noOwnerLabel;
             } else if (Lang.isObject(item.Owner)) {
                 owner = item.Owner._refObjectName;
@@ -344,7 +344,8 @@ function initTaskboard() {
 
             html.push('<div style="' + contentStyle + '">');
             html.push('<div class="id">' + artifactLink(item) + '</div>');
-            html.push('<div class="name">' + RALLY.toolkit.niceSubstring(item.Name, 250) + '</div>');
+            // html.push('<div class="name">' + RALLY.toolkit.niceSubstring(item.Name, 250) + '</div>');
+            html.push('<div class="name">' + item.Name + '</div>');
             html.push('<div class="' + ownerClass.join(' ') + '">' + owner + '</div>');
 
             html.push('<div class="time">');
@@ -1169,6 +1170,10 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
         color: #999;
     }
 
+    .no-owner {
+        color: red;
+    }
+
     .rally-time {
         float: left;
         width: 58px;
@@ -1218,6 +1223,7 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
     .rally-task .name {
         font-size: 1.3em;
         margin-bottom: .5em;
+        word-break: break-word;
     }
 
     .rally-task .owner , .rally-task .submitted-by{
