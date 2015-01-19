@@ -242,13 +242,16 @@ function initTaskboard() {
               if (value.Tags[i].Name == 'Critical') { addlClasses += 'tag-crit '; }
               if (value.Tags[i].Name == 'Pulled') { addlClasses += 'tag-pull '; }
               if (value.Tags[i].Name == 'Pushed') { addlClasses += 'tag-push '; }
+              if (value.Tags[i].Name == 'High Priority!') { addlClasses += 'tag-crit '; }
 
               html.push('<div class="tag ' + addlClasses +'">');
 
               // Custom icons for specific tag types else the usual (horribly inefficienct)
-              if (['Critical'].indexOf(value.Tags[i].Name) > -1) { html.push('<i class="fa fa-warning fa-fw"></i>'); }
               if (['Pulled'].indexOf(value.Tags[i].Name) > -1) { html.push('<i class="fa fa-arrow-left fa-fw"></i>'); }
               if (['Pushed'].indexOf(value.Tags[i].Name) > -1) { html.push('<i class="fa fa-arrow-right fa-fw"></i>'); }
+
+              if (['Critical'].indexOf(value.Tags[i].Name) > -1) { html.push('<i class="fa fa-warning fa-fw"></i>'); }
+              else if (['High Priority!'].indexOf(value.Tags[i].Name) > -1) { html.push('<i class="fa fa-warning fa-fw"></i>'); }
               else {
                 // Standard tags
                 html.push('<i class="fa fa-tag fa-fw"></i>');
@@ -1379,6 +1382,12 @@ YAHOO.util.Event.addListener(window, 'load', initTaskboard);
       background-color: #feecc4;
       color: #b8661f;
       border-color: #d26c00;
+    }
+
+    .tags .tag.tag-defect {
+      background-color: #fffdac;
+      color: #604d00;
+      border-color: #89780c;
     }
 
     .tags .tag.tag-defect {
