@@ -86,7 +86,7 @@ function initTaskboard() {
 
             "tasks": "/tasks?fetch=tags,description,recordedtimespent,taskindex,name,objectid,formattedid,owner,blocked,estimate,todo,actuals,state,workproduct&query=(Iteration = ${iteration})" + scoping + paging,
 
-            "stories": "/hierarchicalrequirement?fetch=tags,description,rank,blocked,planestimate,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal,tasks,inProgressDate&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
+            "stories": "/hierarchicalrequirement?fetch=tags,description,rank,blocked,planestimate,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal,tasks,inProgressDate,ba,qa&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "defects": "/defect?fetch=planestimate,tags,severity,rank,blocked,formattedid,name,objectid,owner,project,schedulestate,submittedby,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "defectsuite": "/defectsuite?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal&order=Rank&query=(Iteration = ${iteration})" + scoping + paging,
             "testsets": "/testset?fetch=rank,blocked,formattedid,name,objectid,owner,project,schedulestate,taskestimatetotal,taskremainingtotal,taskactualtotal&query=(Iteration = ${iteration})" + scoping + paging
@@ -208,6 +208,12 @@ function initTaskboard() {
 
             html.push('<div class="name">' + RALLY.toolkit.niceSubstring(value.Name, 250) + '</div>');
             html.push('<div class="' + ownerClass.join(' ') + '">Owner: ' + owner + '</div>');
+
+            var ba = value.BA || '';
+            html.push('<div class="owner">BA: ' + ba + '</div>');
+
+            var qa = value.QA || '';
+            html.push('<div class="owner">QA: ' + qa + '</div>');
 
             var daArray = modelSchema.WorkProduct.Owner.options;
             var submittedByName;
